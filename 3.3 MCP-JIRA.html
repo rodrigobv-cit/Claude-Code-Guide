@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect & Authenticate Jira in Claude Code via MCP</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #e2e8f0;
+      --heading: #f8fafc;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --border: #334155;
+      --code-bg: #0b1120;
+      --badge-bg: #0369a1;
+      --badge-text: #e0f2fe;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+    }
+
+    h1 {
+      color: var(--heading);
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p.subtitle {
+      color: #94a3b8;
+      font-size: 1.05rem;
+    }
+
+    h2 {
+      color: var(--heading);
+      font-size: 1.35rem;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background-color: var(--badge-bg);
+      color: var(--badge-text);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    ol, ul {
+      padding-left: 1.4rem;
+      margin: 1rem 0;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    pre {
+      background-color: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.9rem;
+      color: #7dd3fc;
+      margin: 1rem 0;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background-color: var(--code-bg);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.88em;
+      color: #bae6fd;
+    }
+
+    pre code {
+      background-color: transparent;
+      padding: 0;
+      color: inherit;
+    }
+
+    .callout {
+      border-left: 4px solid var(--accent);
+      background-color: rgba(56, 189, 248, 0.08);
+      padding: 0.9rem 1.2rem;
+      margin: 1rem 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <span class="badge">Guide</span>
+      <h1>Jira Integration for Claude Code via MCP</h1>
+      <p class="subtitle">Complete reference for configuring, authenticating, and running Jira tools inside Claude Code.</p>
+    </header>
+
+    <!-- Option 1 -->
+    <div class="card">
+      <h2>Option 1: Official Atlassian Remote MCP Server (OAuth 2.1)</h2>
+      <p>Recommended for interactive desktop use. Uses Atlassian's hosted MCP endpoint with browser authentication.</p>
+
+      <ol>
+        <li>
+          <strong>Add the Server:</strong>
+          <pre><code>claude mcp add --transport http atlassian https://mcp.atlassian.com/v2/mcp</code></pre>
+        </li>
+        <li>
+          <strong>Authenticate via Browser:</strong>
+          <p>Launch Claude Code and trigger the MCP manager:</p>
+          <pre><code>claude</code></pre>
+          <p>Type <code>/mcp</code> inside the interactive session, follow the OAuth link generated in the terminal, and approve your Jira workspace in the browser.</p>
+        </li>
+      </ol>
+    </div>
+
+    <!-- Option 2 -->
+    <div class="card">
+      <h2>Option 2: Local Stdio Server (API Token / Headless)</h2>
+      <p>Recommended for CI/CD environments or setups that prohibit OAuth callbacks.</p>
+
+      <ol>
+        <li>
+          <strong>Generate an Atlassian API Token:</strong>
+          <p>Visit <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" style="color: var(--accent);">Atlassian Account Security</a> and create a token.</p>
+        </li>
+        <li>
+          <strong>Add via <code>claude mcp add</code>:</strong>
+          <pre><code>claude mcp add \
+  --transport stdio \
+  --scope user \
+  --env JIRA_URL="https://your-domain.atlassian.net" \
+  --env JIRA_EMAIL="your.email@company.com" \
+  --env JIRA_API_TOKEN="YOUR_ATLASSIAN_API_TOKEN" \
+  jira -- npx -y @rui.branco/jira-mcp</code></pre>
+        </li>
+      </ol>
+
+      <div class="callout">
+        <strong>Tip:</strong> You can alternatively define this inside your project root's <code>.mcp.json</code> file to avoid raw credentials in shell history:
+      </div>
+
+      <pre><code>{
+  "mcpServers": {
+    "jira": {
+      "command": "npx",
+      "args": ["-y", "@rui.branco/jira-mcp"],
+      "env": {
+        "JIRA_URL": "https://your-domain.atlassian.net",
+        "JIRA_EMAIL": "your.email@company.com",
+        "JIRA_API_TOKEN": "YOUR_ATLASSIAN_API_TOKEN"
+      }
+    }
+  }
+}</code></pre>
+    </div>
+
+    <!-- Verification -->
+    <div class="card">
+      <h2>Verification and Testing</h2>
+      <ul>
+        <li>
+          <strong>Check Connection Status:</strong>
+          <pre><code>claude mcp list</code></pre>
+        </li>
+        <li>
+          <strong>Sample Prompts to Test:</strong>
+          <pre><code>claude
+> "Show me all open bugs assigned to me in the current sprint."
+> "Find Jira issue PROJ-101 and display its acceptance criteria."</code></pre>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</body>
+</html>

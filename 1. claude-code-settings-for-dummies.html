@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Settings — For Dummies</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #171a23;
+    --panel-border: #2a2e3a;
+    --text: #e4e6eb;
+    --muted: #9aa0ac;
+    --accent: #d97757;
+    --accent-soft: rgba(217, 119, 87, 0.12);
+    --code-bg: #0b0d12;
+    --green: #7fd88f;
+    --blue: #7aa8d9;
+    --purple: #c792ea;
+    --red: #e08a8a;
+    --yellow: #e0c97f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+    padding: 32px 16px 90px;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+
+  header { margin-bottom: 36px; }
+  h1 { font-size: 1.8rem; margin: 0 0 10px; color: #fff; letter-spacing: -0.01em; }
+  header p { color: var(--muted); margin: 0; font-size: 1rem; }
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 20px 0 0;
+  }
+  nav a {
+    font-size: 0.78rem;
+    color: var(--accent);
+    text-decoration: none;
+    background: var(--accent-soft);
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+
+  section {
+    margin-bottom: 34px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 24px 24px 26px;
+    scroll-margin-top: 20px;
+  }
+  h2 {
+    font-size: 1.2rem;
+    margin: 0 0 8px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #1a1a1a;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .desc { color: var(--muted); font-size: 0.94rem; margin: 0 0 18px; }
+
+  .analogy {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 0 0 18px;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+  .analogy strong { color: var(--accent); }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 14px;
+    overflow-x: auto;
+    margin: 0 0 12px;
+    font-size: 0.8rem;
+  }
+  pre:last-child { margin-bottom: 0; }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; color: #d8dbe2; }
+  .kw { color: var(--purple); }
+  .str { color: #c3e88d; }
+  .com { color: #676e95; }
+  .fn { color: var(--blue); }
+  .key { color: var(--yellow); }
+
+  .note {
+    margin-top: 14px;
+    font-size: 0.88rem;
+    color: var(--muted);
+    padding-left: 12px;
+    border-left: 2px solid var(--accent);
+  }
+  .note strong { color: var(--text); }
+  .note.warn { border-left-color: var(--red); }
+  .note.warn strong { color: var(--red); }
+  .note.tip { border-left-color: var(--green); }
+  .note.tip strong { color: var(--green); }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--panel-border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  td { color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  td code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: 0.8rem; }
+
+  .subhead { font-size: 0.88rem; font-weight: 600; color: var(--text); margin: 20px 0 8px; }
+  .subhead:first-child { margin-top: 0; }
+
+  /* Precedence ladder */
+  .ladder {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 16px 0;
+  }
+  .ladder-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--code-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .ladder-row.top { border-color: var(--accent); background: var(--accent-soft); }
+  .ladder-rank {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--panel-border);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .ladder-row.top .ladder-rank { background: var(--accent); color: #1a1a1a; }
+  .ladder-body { flex: 1; min-width: 0; }
+  .ladder-name { font-weight: 600; font-size: 0.92rem; color: var(--text); }
+  .ladder-file { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.78rem; color: var(--accent); margin-top: 2px; }
+  .ladder-who { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+  .ladder-arrow {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.75rem;
+    margin: -2px 0;
+  }
+
+  /* File tree */
+  .tree {
+    background: var(--code-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.82rem;
+    line-height: 1.75;
+    overflow-x: auto;
+  }
+  .tree .dir { color: var(--blue); }
+  .tree .file { color: var(--green); }
+  .tree .comment { color: var(--muted); }
+
+  /* Decision flow */
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 14px 0;
+    font-size: 0.8rem;
+  }
+  .flow .step {
+    background: var(--code-bg);
+    border: 1px solid var(--panel-border);
+    padding: 7px 11px;
+    border-radius: 6px;
+    color: var(--text);
+  }
+  .flow .arrow { color: var(--muted); }
+
+  .faq-q {
+    font-weight: 600;
+    color: var(--text);
+    margin: 18px 0 6px;
+    font-size: 0.92rem;
+  }
+  .faq-q:first-child { margin-top: 0; }
+  .faq-a { color: var(--muted); font-size: 0.88rem; margin: 0; }
+
+  footer { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 40px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="badge">For Dummies</span>
+    <h1>Claude Code Settings, Explained Simply</h1>
+    <p>Where Claude Code's config files live, who they affect, and which one wins when they disagree.</p>
+    <nav>
+      <a href="#why">Why settings exist</a>
+      <a href="#four-files">The 4 files</a>
+      <a href="#precedence">Which one wins</a>
+      <a href="#tree">Folder layout</a>
+      <a href="#example">A real file</a>
+      <a href="#merge">How lists merge</a>
+      <a href="#check">Checking what loaded</a>
+      <a href="#ci">CI/CD gotcha</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+  </header>
+
+  <section id="why">
+    <h2><span class="num">1</span>Why do settings files even exist?</h2>
+    <p class="desc">Claude Code needs to know things like: which AI model to use, what commands it's allowed to run without asking you first, and what files it should never touch. Instead of you re-typing this every single time, you write it down once in a file, and Claude Code reads it automatically.</p>
+    <div class="analogy"><strong>Think of it like:</strong> the settings menu on your phone. Some settings are "just for you" (your wallpaper), some are shared with your family (the Wi-Fi password), and some are locked by your employer if it's a work phone (you can't uninstall the security app). Claude Code has the exact same idea — just spread across a few files instead of one menu.</div>
+  </section>
+
+  <section id="four-files">
+    <h2><span class="num">2</span>The four settings files (plus one you don't touch)</h2>
+    <p class="desc">Claude Code checks up to five places for settings. Each one has a different "audience" — who it applies to.</p>
+
+    <table>
+      <tr><th>File</th><th>Lives where</th><th>Who it affects</th><th>What it's for</th></tr>
+      <tr>
+        <td><strong>User settings</strong></td>
+        <td><code>~/.claude/settings.json</code></td>
+        <td>Just you, on this computer, in every project you open</td>
+        <td>Your personal defaults — favorite model, your own permission habits</td>
+      </tr>
+      <tr>
+        <td><strong>Shared project settings</strong></td>
+        <td><code>.claude/settings.json</code> (inside the project folder)</td>
+        <td>Everyone on the team who works in that project</td>
+        <td>Team rules — "everyone can run <code>npm test</code> without asking"</td>
+      </tr>
+      <tr>
+        <td><strong>Project local settings</strong></td>
+        <td><code>.claude/settings.local.json</code></td>
+        <td>Just you, and only in this one project</td>
+        <td>Your personal exceptions — override the team's file just for yourself</td>
+      </tr>
+      <tr>
+        <td><strong>Managed settings</strong></td>
+        <td>Deployed by your company (IT/security)</td>
+        <td>Everyone your company deploys it to</td>
+        <td>Rules nobody can override — e.g. "never run <code>rm -rf</code>"</td>
+      </tr>
+    </table>
+
+    <div class="note"><strong>The fifth file, <code>~/.claude.json</code>:</strong> Claude Code writes this one itself to remember things like your login and MCP server connections. You never need to hand-edit it.</div>
+
+    <div class="analogy"><strong>The tilde (<code>~</code>) trick:</strong> <code>~</code> is shorthand for "your home folder" — like <code>C:\Users\YourName</code> on Windows or <code>/Users/YourName</code> on Mac. So <code>~/.claude/settings.json</code> means "a hidden folder in MY home directory," separate from any specific project.</div>
+  </section>
+
+  <section id="precedence">
+    <h2><span class="num">3</span>Which file wins when they disagree?</h2>
+    <p class="desc">If your personal file says "use model A" and your team's file says "use model B" — who wins? Claude Code always uses the value from the file <strong>highest</strong> in this list. Higher = more powerful = overrides everything below it.</p>
+
+    <div class="ladder">
+      <div class="ladder-row top">
+        <div class="ladder-rank">1</div>
+        <div class="ladder-body">
+          <div class="ladder-name">Managed settings <span style="color:var(--muted); font-weight:400;">— your company's IT policy</span></div>
+          <div class="ladder-file">managed-settings.json / MDM / claude.ai console</div>
+          <div class="ladder-who">Nothing you do overrides this. Full stop.</div>
+        </div>
+      </div>
+      <div class="ladder-arrow">↓ overrides everything below</div>
+      <div class="ladder-row">
+        <div class="ladder-rank">2</div>
+        <div class="ladder-body">
+          <div class="ladder-name">Command line <span style="color:var(--muted); font-weight:400;">— a flag you typed just now</span></div>
+          <div class="ladder-file">claude --settings '{...}'</div>
+          <div class="ladder-who">Only lasts for this one session — nothing gets saved</div>
+        </div>
+      </div>
+      <div class="ladder-arrow">↓</div>
+      <div class="ladder-row">
+        <div class="ladder-rank">3</div>
+        <div class="ladder-body">
+          <div class="ladder-name">Project local settings <span style="color:var(--muted); font-weight:400;">— your personal tweak, this project only</span></div>
+          <div class="ladder-file">.claude/settings.local.json</div>
+          <div class="ladder-who">You, and only in this one project folder</div>
+        </div>
+      </div>
+      <div class="ladder-arrow">↓</div>
+      <div class="ladder-row">
+        <div class="ladder-rank">4</div>
+        <div class="ladder-body">
+          <div class="ladder-name">Shared project settings <span style="color:var(--muted); font-weight:400;">— the team's file</span></div>
+          <div class="ladder-file">.claude/settings.json</div>
+          <div class="ladder-who">Everyone who clones this repo, once the file is committed</div>
+        </div>
+      </div>
+      <div class="ladder-arrow">↓</div>
+      <div class="ladder-row">
+        <div class="ladder-rank">5</div>
+        <div class="ladder-body">
+          <div class="ladder-name">User settings <span style="color:var(--muted); font-weight:400;">— your all-projects defaults</span></div>
+          <div class="ladder-file">~/.claude/settings.json</div>
+          <div class="ladder-who">You, everywhere, unless something above overrides it</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note tip"><strong>Simple example:</strong> Your team's shared file sets the model to Sonnet. You personally prefer Opus. You add <code>"model": "claude-opus-4-8"</code> to YOUR <code>.claude/settings.local.json</code>. Now only your sessions use Opus — your teammates still get Sonnet, because your local file (#3) beats the shared file (#4), but only for you.</div>
+  </section>
+
+  <section id="tree">
+    <h2><span class="num">4</span>What the folders actually look like</h2>
+    <p class="desc">Here's a real layout, side by side — the "your machine, everywhere" folder vs. the "this one project" folder.</p>
+
+    <div class="subhead">Your machine (applies to every project you open)</div>
+    <div class="tree">~/.claude/<span class="comment">                        ← lives in your home folder</span>
+├── <span class="file">settings.json</span>              <span class="comment">← your personal defaults</span>
+└── <span class="dir">agents/</span>                     <span class="comment">← subagents available in ALL your projects</span>
+    └── <span class="file">code-reviewer.md</span></div>
+
+    <div class="subhead">Inside one project (only applies there)</div>
+    <div class="tree">my-project/<span class="comment">
+</span>└── <span class="dir">.claude/</span>
+    ├── <span class="file">settings.json</span>          <span class="comment">← committed to git, shared with the team</span>
+    ├── <span class="file">settings.local.json</span>    <span class="comment">← yours only — auto-gitignored, never committed</span>
+    ├── <span class="file">CLAUDE.md</span>               <span class="comment">← instructions Claude reads every session in this project</span>
+    └── <span class="dir">agents/</span>                 <span class="comment">← subagents specific to THIS project</span>
+        └── <span class="file">test-runner.md</span></div>
+
+    <div class="note"><strong>Why the dot in front?</strong> A leading dot (<code>.claude</code>) makes it a "hidden" folder on Mac/Linux — it won't clutter your normal file browser, but it's still there and Claude Code finds it automatically.</div>
+  </section>
+
+  <section id="example">
+    <h2><span class="num">5</span>A real settings file, explained line by line</h2>
+    <p class="desc">This is what a typical shared team file looks like. Every line does one specific thing.</p>
+
+    <pre><code>{
+  <span class="key">"$schema"</span>: <span class="str">"https://json.schemastore.org/claude-code-settings.json"</span>,
+  <span class="key">"permissions"</span>: {
+    <span class="key">"allow"</span>: [
+      <span class="str">"Bash(npm run lint)"</span>,
+      <span class="str">"Bash(npm run test *)"</span>,
+      <span class="str">"Agent"</span>
+    ],
+    <span class="key">"deny"</span>: [
+      <span class="str">"Read(./.env)"</span>,
+      <span class="str">"Read(./.env.*)"</span>
+    ]
+  }
+}</code></pre>
+
+    <table>
+      <tr><th>Line</th><th>What it means in plain English</th></tr>
+      <tr><td><code>$schema</code></td><td>Not a real setting — it just tells your code editor "here's the shape this file should follow" so you get autocomplete and red squiggles if you typo something</td></tr>
+      <tr><td><code>permissions.allow</code></td><td>A list of things Claude Code can do <strong>without asking you first</strong></td></tr>
+      <tr><td><code>"Bash(npm run lint)"</code></td><td>"You're allowed to run exactly this one command, no permission prompt needed"</td></tr>
+      <tr><td><code>"Bash(npm run test *)"</code></td><td>The <code>*</code> is a wildcard — "any <code>npm run test</code> command, with any extra arguments, is fine"</td></tr>
+      <tr><td><code>"Agent"</code></td><td>"You're allowed to delegate work to subagents" (without this line, Claude can't call any subagent at all)</td></tr>
+      <tr><td><code>permissions.deny</code></td><td>The opposite of allow — things Claude is <strong>never</strong> allowed to do, no matter what</td></tr>
+      <tr><td><code>"Read(./.env)"</code></td><td>"Never let Claude open the <code>.env</code> file" — this is usually where secrets/passwords live, so you keep it off-limits</td></tr>
+    </table>
+
+    <div class="note warn"><strong>Watch out:</strong> these files are strict JSON — no comments with <code>//</code>, no trailing commas after the last item in a list. One typo and Claude Code will show you an error the next time it starts.</div>
+  </section>
+
+  <section id="merge">
+    <h2><span class="num">6</span>The one tricky part: lists don't replace, they combine</h2>
+    <p class="desc">Most settings work like you'd expect — the higher file wins, end of story. But <strong>lists</strong> (like <code>permissions.allow</code>) are different: Claude Code adds them all together instead of picking just one.</p>
+
+    <div class="analogy">
+      <strong>Example:</strong> Your team's shared file allows <code>["npm test"]</code>. Your personal local file allows <code>["git push"]</code>. You end up with <strong>both</strong> — <code>npm test</code> AND <code>git push</code> — not just one or the other. Think of it like two people each adding items to the same shopping list, rather than one person's list replacing the other's.
+    </div>
+
+    <div class="note tip"><strong>Practical upshot:</strong> if your team already put <code>"Agent"</code> in the shared <code>.claude/settings.json</code>, you don't need to add it again anywhere for yourself — it's already active because the lists get merged, not overwritten.</div>
+  </section>
+
+  <section id="check">
+    <h2><span class="num">7</span>How do I know which files are actually being used?</h2>
+    <p class="desc">Don't guess — ask Claude Code directly. Run this inside a session:</p>
+    <pre><code><span class="fn">/status</span></code></pre>
+    <p class="desc" style="margin-top:10px;">Look for the line that says <strong>"Setting sources"</strong> — it lists every settings file Claude Code actually loaded for this session. If a setting you added isn't behaving as expected, this is always the first thing to check.</p>
+
+    <div class="flow">
+      <span class="step">Edit a settings file</span>
+      <span class="arrow">→</span>
+      <span class="step">Run /status</span>
+      <span class="arrow">→</span>
+      <span class="step">Confirm the file appears in "Setting sources"</span>
+      <span class="arrow">→</span>
+      <span class="step">If not: check for JSON typos or a higher-priority file overriding it</span>
+    </div>
+  </section>
+
+  <section id="ci">
+    <h2><span class="num">8</span>The CI/CD gotcha: only ONE of these files actually reaches your pipeline</h2>
+    <p class="desc">This is the part people get wrong most often. When your pipeline (GitHub Actions, GitLab CI, etc.) checks out your code fresh, it does <strong>not</strong> get your personal computer's settings.</p>
+
+    <table>
+      <tr><th>File</th><th>Reaches CI?</th><th>Why</th></tr>
+      <tr><td><code>~/.claude/settings.json</code> <span style="color:var(--muted);">(user)</span></td><td style="color:var(--red);">✗ No</td><td>This lives on YOUR computer's home folder — CI runners are fresh machines that have never seen it</td></tr>
+      <tr><td><code>.claude/settings.local.json</code> <span style="color:var(--muted);">(local)</span></td><td style="color:var(--red);">✗ No</td><td>Deliberately excluded from git (that's the whole point of "local") — so it never gets checked out</td></tr>
+      <tr><td><code>.claude/settings.json</code> <span style="color:var(--green);">(shared project)</span></td><td style="color:var(--green);">✓ Yes</td><td>This is the one you commit to git — so it's the only one that travels with the checked-out code</td></tr>
+    </table>
+
+    <div class="note warn"><strong>What this means for you:</strong> if you want Claude Code to have certain permissions (like <code>"Agent"</code> for subagents) when running in CI, you have exactly two choices: (1) commit them into the shared <code>.claude/settings.json</code> file, or (2) pass them as command-line flags in your pipeline config (e.g. <code>--allowedTools "Agent"</code> in GitHub Actions' <code>claude_args</code>). Anything sitting only in your personal user or local file will silently be missing in CI.</div>
+  </section>
+
+  <section id="faq">
+    <h2><span class="num">9</span>Quick FAQ</h2>
+
+    <p class="faq-q">Do I need to create all these files myself?</p>
+    <p class="faq-a">No. Claude Code creates <code>~/.claude/settings.json</code> and <code>.claude/settings.local.json</code> for you automatically the first time you change a setting or approve a permission. You only manually create <code>.claude/settings.json</code> (the shared team one) if your project doesn't already have one.</p>
+
+    <p class="faq-q">Will my personal file accidentally get shared with my team?</p>
+    <p class="faq-a">No — Claude Code automatically adds <code>.claude/settings.local.json</code> to your global git-ignore the first time it writes to it, so it can never accidentally get committed.</p>
+
+    <p class="faq-q">What if I break a settings file with a typo?</p>
+    <p class="faq-a">Claude Code shows you a dialog at startup offering to fix it with Claude's help, or to just continue without that broken file. It won't silently fail on you.</p>
+
+    <p class="faq-q">Can my company force settings on me even if I disagree?</p>
+    <p class="faq-a">Yes — that's exactly what "Managed settings" is for. It sits at the very top of the precedence list specifically so a company's security policy can't be overridden by an individual developer.</p>
+
+    <p class="faq-q">I set something and it's not working. What's the very first thing to check?</p>
+    <p class="faq-a">Run <code>/status</code> inside Claude Code. It shows exactly which files loaded — nine times out of ten, the setting is either in the wrong file, or something higher up the precedence ladder is overriding it.</p>
+  </section>
+
+  <footer>Claude Code settings, explained simply — user, project, local, and managed files, and how they interact.</footer>
+</div>
+</body>
+</html>

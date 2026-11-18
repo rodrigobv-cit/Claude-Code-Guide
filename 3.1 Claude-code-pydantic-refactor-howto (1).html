@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Claude Code How-To: Pydantic-Adoption Refactor</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 24px;
+    line-height: 1.65;
+    color: #1a1a1a;
+    background: #fdfdfd;
+  }
+  h1 {
+    font-size: 1.9em;
+    border-bottom: 3px solid #2b6cb0;
+    padding-bottom: 10px;
+  }
+  h2 {
+    font-size: 1.35em;
+    color: #2b6cb0;
+    margin-top: 2.2em;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 6px;
+  }
+  h3 {
+    font-size: 1.05em;
+    color: #333;
+    margin-top: 1.6em;
+  }
+  code {
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.9em;
+  }
+  pre {
+    background: #1e1e2e;
+    color: #e6e6e6;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.85em;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+  .filepath {
+    display: inline-block;
+    background: #2b2b40;
+    color: #9fd0ff;
+    padding: 2px 8px;
+    border-radius: 4px 4px 0 0;
+    font-family: monospace;
+    font-size: 0.82em;
+    margin-bottom: -1px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 9px 11px;
+    text-align: left;
+    vertical-align: top;
+    font-size: 0.93em;
+  }
+  th {
+    background: #2b6cb0;
+    color: white;
+  }
+  tr:nth-child(even) { background: #f6f8fa; }
+  .intro { font-style: italic; color: #555; }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #2b6cb0;
+    color: white;
+    font-weight: bold;
+    font-size: 0.85em;
+    margin-right: 8px;
+  }
+  .note {
+    background: #fff8e1;
+    border-left: 4px solid #f0ad4e;
+    padding: 10px 16px;
+    margin: 1em 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .safety {
+    background: #fdecea;
+    border-left: 4px solid #d9534f;
+    padding: 10px 16px;
+    margin: 1em 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .tip {
+    background: #e8f4fd;
+    border-left: 4px solid #2b6cb0;
+    padding: 10px 16px;
+    margin: 1em 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .source {
+    background: #f3f0fb;
+    border-left: 4px solid #7c5cbf;
+    padding: 10px 16px;
+    margin: 1em 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.93em;
+  }
+  ul.checklist { list-style: none; padding-left: 0; }
+  ul.checklist li { margin: 6px 0; }
+  ul.checklist input { margin-right: 8px; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 2.2em 0; }
+  .tree {
+    background: #f6f8fa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-family: monospace;
+    font-size: 0.85em;
+    white-space: pre;
+  }
+  .phase-badge {
+    display: inline-block;
+    background: #2b6cb0;
+    color: white;
+    font-size: 0.72em;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Running a Pydantic-Adoption Refactor with Claude Code</h1>
+<p class="intro">A concrete, safety-first walkthrough that uses Claude Code's real configuration surfaces — <code>CLAUDE.md</code>, path-scoped rules, hooks, and custom skills (slash commands) — organized around the four phases Anthropic's own <em>Claude Code in Action</em> course teaches: <strong>Steer</strong>, <strong>Configure</strong>, <strong>Automate</strong>, and <strong>Verify &amp; Share</strong>.</p>
+
+<div class="source">
+<strong>On the course reference:</strong> <a href="https://anthropic.skilljar.com/claude-code-in-action/486930">anthropic.skilljar.com/claude-code-in-action</a> is Anthropic's official course, "Claude Code in Action." Its lesson content sits behind a Skilljar login, so this guide doesn't quote from inside it — only the publicly listed course description and curriculum were available: <em>Steer the Work</em> (plan mode, compaction, the rewind menu, goal/loop runs), <em>Configure Claude</em> (a lean CLAUDE.md, skills, permission modes, hooks), <em>Automate Repeat Work</em> (routines, headless mode, GitHub Actions and code review), and <em>Verify and Share</em> (verifying unsupervised runs, gating on real test results, packaging a plugin). This guide is organized to mirror that shape and applies it concretely to one task — Pydantic adoption — using the documented mechanics of each feature at <code>docs.claude.com</code>. If you have course access, the "A CLAUDE.md That Follows," "Hooks," and "Trust It: Verifying Unsupervised Runs" lessons will go deeper than what's here.
+</div>
+
+<div class="note">
+<strong>Scope note:</strong> "Custom commands" in Claude Code are implemented as <strong>skills</strong> (a <code>SKILL.md</code> file under <code>.claude/skills/&lt;name&gt;/</code>). The older <code>.claude/commands/*.md</code> format still works but skills are recommended and used throughout.
+</div>
+
+<hr>
+
+<h2>0. Before you start: set up a safety net</h2>
+<p>These aren't Claude Code features — they're the ordinary engineering safety net a refactor needs regardless of tooling.</p>
+<ul>
+  <li>Work on a dedicated branch: <code>git checkout -b refactor/pydantic-adoption</code></li>
+  <li>Confirm the test suite passes <em>before</em> Claude touches anything, so you have a real baseline: <code>pytest -q</code></li>
+  <li>Commit or stash any unrelated in-flight work. Claude Code's checkpoint/rewind feature (<code>/rewind</code>) automatically snapshots code before every prompt in the session and lets you revert, but it only tracks edits made through Claude's own Edit/Write tools — not Bash-driven changes (<code>rm</code>, <code>mv</code>), not most subagent/background work, and not symlinked files. Treat it as fast in-session undo, not a substitute for git history.</li>
+</ul>
+
+<hr>
+
+<h2 id="steer"><span class="phase-badge">Phase 1 — Steer</span><br>1. Give Claude persistent project context — <code>CLAUDE.md</code></h2>
+<p><code>CLAUDE.md</code> is loaded into every session and is the right place for durable facts: build/test commands and the project's Pydantic conventions. Run <code>/init</code> first if you don't have one — it generates a starting file from your codebase. Keep it under ~200 lines; anything longer reduces how reliably Claude follows it.</p>
+
+<span class="filepath">./CLAUDE.md</span>
+<pre><code># Project: &lt;your project name&gt;
+
+## Build &amp; test
+- Install: `pip install -e ".[dev]"`
+- Run tests: `pytest -q`
+- Lint: `ruff check .`
+- Type check: `mypy src/`
+
+## Pydantic conventions (target state for this refactor)
+- Standardize on **Pydantic v2** for all data crossing module or API boundaries.
+- New/migrated models subclass `pydantic.BaseModel`.
+- Use `field_validator` / `model_validator`, not v1's `@validator`.
+- Configure models with `model_config = ConfigDict(...)`, not an inner `class Config`.
+- Serialize with `.model_dump()` / `.model_dump_json()`, not `.dict()` / `.json()`.
+- Settings load via `pydantic-settings.BaseSettings`, not raw `os.environ` reads.
+- Don't introduce new `@dataclass` or `TypedDict` types for data that crosses a
+  module or API boundary — use a Pydantic model instead. Dataclasses remain fine
+  for small, purely internal value objects that never leave a function.
+
+## Refactor session rules
+- Never edit database migration files or lockfiles as part of this refactor.
+- One logical change per commit (e.g. "migrate UserPayload to Pydantic v2").
+- Run the affected tests after every file change, not just at the end.
+</code></pre>
+
+<div class="tip">Run <code>/context</code> in a session afterward and confirm <code>CLAUDE.md</code> appears under <strong>Memory files</strong> — if it's missing there, Claude never saw it.</div>
+
+<hr>
+
+<h2>2. Scope detailed conventions with a path-specific rule</h2>
+<p>Full v1→v2 migration detail doesn't need to sit in context for every session — only when Claude is actually touching Python files. A rule in <code>.claude/rules/</code> with a <code>paths</code> filter loads on demand instead of every session, keeping <code>CLAUDE.md</code> lean.</p>
+
+<span class="filepath">.claude/rules/pydantic.md</span>
+<pre><code>---
+paths:
+  - "src/**/*.py"
+  - "tests/**/*.py"
+---
+
+# Pydantic v2 migration rules
+
+- Prefer `field_validator(mode="before"|"after")` over v1's `@validator`.
+- Prefer `model_validator(mode="before"|"after")` over v1's `@root_validator`.
+- Replace `class Config:` blocks with `model_config = ConfigDict(...)`.
+- Replace `.dict()` → `.model_dump()`, `.json()` → `.model_dump_json()`.
+- When a field was previously untyped or loosely typed, add the narrowest
+  correct type — but don't add new validation constraints (min_length, regex,
+  etc.) unless the audit specifically flagged missing validation. Speculative
+  constraints can break existing valid data.
+- Preserve default values and Optional-ness exactly as they were before
+  migration. A behavior change is a bug in this refactor, not a bonus fix.
+- If a dataclass or TypedDict is purely internal (never serialized, never
+  crosses a function boundary into another module), leave it alone.
+</code></pre>
+
+<hr>
+
+<h2 id="configure"><span class="phase-badge">Phase 2 — Configure</span><br>3. Add safety hooks</h2>
+<p><code>CLAUDE.md</code> and rules are <em>context</em> — Claude tries to follow them but nothing enforces it. Hooks are shell commands Claude Code runs deterministically at fixed lifecycle points, regardless of what the model decides. Use them for the two things you actually want guaranteed: migrations/lockfiles never get touched, and Claude can't claim to be done while tests are failing.</p>
+
+<h3>3a. Block edits to migrations and lockfiles</h3>
+<span class="filepath">.claude/hooks/protect-migration-files.sh</span>
+<pre><code>#!/bin/bash
+# Blocks Edit/Write on migration and lockfile paths during the refactor.
+INPUT=$(cat)
+FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
+FILE_PATH="${FILE_PATH//\\//}"   # normalize Windows separators
+
+PROTECTED_PATTERNS=(
+  "alembic/versions/"
+  "/migrations/"
+  "poetry.lock"
+  "requirements.txt"
+  "requirements-lock.txt"
+  "uv.lock"
+)
+
+for pattern in "${PROTECTED_PATTERNS[@]}"; do
+  if [[ "$FILE_PATH" == *"$pattern"* ]]; then
+    echo "Blocked: $FILE_PATH matches protected pattern '$pattern'. This refactor does not touch migrations or lockfiles." &gt;&amp;2
+    exit 2
+  fi
+done
+
+exit 0
+</code></pre>
+
+<p>Make it executable, then register it as a <code>PreToolUse</code> hook scoped to project settings so it's committed and shared with the team:</p>
+
+<span class="filepath">.claude/settings.json</span>
+<pre><code>{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-migration-files.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path' | grep '\\.py$' | xargs -r ruff check --fix"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/verify-tests-before-stop.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+</code></pre>
+
+<pre><code>chmod +x .claude/hooks/protect-migration-files.sh
+chmod +x .claude/hooks/verify-tests-before-stop.sh</code></pre>
+
+<h3>3b. Auto-lint every edited file (PostToolUse)</h3>
+<p>The <code>PostToolUse</code> entry above runs <code>ruff check --fix</code> on any Python file Claude just edited or wrote — instant, deterministic style/import cleanup after every change, with no LLM round-trip.</p>
+
+<h3>3c. Don't let Claude declare victory on a red test suite (Stop)</h3>
+<span class="filepath">.claude/hooks/verify-tests-before-stop.sh</span>
+<pre><code>#!/bin/bash
+# Runs the test suite before Claude is allowed to end its turn.
+# Blocks (exit 2) and feeds the failure back to Claude if tests are red.
+INPUT=$(cat)
+
+# Avoid an infinite loop: if this hook already blocked once for this stop
+# and Claude is stopping again right after, let it through this time.
+if [ "$(echo "$INPUT" | jq -r '.stop_hook_active')" = "true" ]; then
+  exit 0
+fi
+
+if ! pytest -q &gt; /tmp/pydantic-refactor-pytest.log 2&gt;&amp;1; then
+  echo "Tests are failing — fix them before stopping. Last 40 lines:" &gt;&amp;2
+  tail -n 40 /tmp/pydantic-refactor-pytest.log &gt;&amp;2
+  exit 2
+fi
+
+exit 0
+</code></pre>
+
+<div class="safety">
+<strong>Why this matters:</strong> without the Stop hook, nothing stops Claude from saying "migration complete" while a test is silently broken. With it, Claude Code re-runs the suite every time Claude tries to finish and forces a fix-or-explain loop. If your suite is slow, scope the hook to just the affected test paths, or run it only on <code>PostToolUse</code> for files under <code>src/</code> instead of on every <code>Stop</code>.
+</div>
+
+<p>Confirm both hooks registered correctly by typing <code>/hooks</code> in a session — you should see <code>PreToolUse</code>, <code>PostToolUse</code>, and <code>Stop</code> each listed with a count.</p>
+
+<hr>
+
+<h2>4. Create two custom skills (slash commands)</h2>
+<p>Skills package a repeatable prompt as a <code>/name</code> command. Both skills below set <code>disable-model-invocation: true</code> so Claude can never trigger them on its own — you decide when the audit runs and when the refactor executes.</p>
+
+<h3>4a. <code>/pydantic-audit</code> — read-only diagnostic</h3>
+<span class="filepath">.claude/skills/pydantic-audit/SKILL.md</span>
+<pre><code>---
+name: pydantic-audit
+description: Audit this codebase's Pydantic adoption (version, usage patterns, competing data types) and report findings. Read-only — makes no edits.
+disable-model-invocation: true
+allowed-tools: Bash(pip show pydantic) Bash(rg *) Bash(grep -rn *) Read Grep Glob
+---
+
+Audit this codebase's Pydantic adoption. **Do not edit any files during this
+skill** — this is a read-only diagnostic pass.
+
+1. Find the installed Pydantic version: `pip show pydantic`
+2. Find all Pydantic model definitions (search for `BaseModel`)
+3. Find v1-style patterns needing migration: `.dict()`, `.json()`,
+   `@validator`, `@root_validator`, an inner `class Config`
+4. Find competing patterns used for data that crosses a module or API
+   boundary: `@dataclass`, `TypedDict`, raw `dict`
+5. Check whether settings load via `pydantic-settings` or raw `os.environ`
+6. If SQLAlchemy is present, check for unnecessary duplication between ORM
+   models and Pydantic models, and whether `from_attributes`/`orm_mode`
+   bridges them
+
+Report the findings as a table: file path, current pattern, recommended
+target pattern, priority (high/medium/low), and a one-line reason. End with a
+short summary paragraph. Do not propose a step-by-step refactor plan yet —
+that's a separate step, after I've reviewed this audit.
+</code></pre>
+
+<h3>4b. <code>/pydantic-refactor</code> — execute an approved plan</h3>
+<span class="filepath">.claude/skills/pydantic-refactor/SKILL.md</span>
+<pre><code>---
+name: pydantic-refactor
+description: Execute an approved Pydantic-v2 migration for the given file or module, following CLAUDE.md and .claude/rules/pydantic.md.
+disable-model-invocation: true
+argument-hint: [path]
+---
+
+Refactor $ARGUMENTS to standardize on Pydantic v2, following the conventions
+in CLAUDE.md and `.claude/rules/pydantic.md`.
+
+1. Re-read the target file(s) first and confirm the plan still applies —
+   code may have changed since the audit was written.
+2. Convert dataclasses, TypedDicts, or raw dicts that cross a module or API
+   boundary into Pydantic v2 `BaseModel` classes.
+3. Migrate v1-style syntax: `@validator` → `field_validator`,
+   `@root_validator` → `model_validator`, `class Config` → `model_config`,
+   `.dict()`/`.json()` → `.model_dump()`/`.model_dump_json()`.
+4. Preserve existing field defaults, optionality, and runtime behavior
+   exactly. Do not add new validation constraints unless the audit flagged
+   missing validation for this specific field.
+5. Run the tests for the affected module after finishing this file.
+6. If a test fails, stop and report it — do not loosen the test or the model
+   to make it pass without understanding why.
+
+Work one file at a time. Keep each file's change as its own commit with a
+message like "migrate &lt;ModuleName&gt; to Pydantic v2".
+</code></pre>
+
+<div class="tip">Both skills use <code>disable-model-invocation: true</code>, so they never appear as something Claude decides to run on its own — only you can type <code>/pydantic-audit</code> or <code>/pydantic-refactor src/api/users.py</code>.</div>
+
+<hr>
+
+<h2 id="steer-2"><span class="phase-badge">Phase 1 — Steer</span><br>5. Run the session — Plan Mode first</h2>
+<p>Plan Mode tells Claude to research and propose changes without editing anything. Except in sessions with bypass-permissions enabled, file edits stay blocked until you explicitly approve a plan — this is the "look before you leap" phase.</p>
+
+<table>
+<tr><th>Step</th><th>Action</th></tr>
+<tr><td><span class="step-num">1</span></td><td>Start Claude Code in the project root: <code>claude --permission-mode plan</code> (or start normally and press <code>Shift+Tab</code> until the status bar shows <code>⏸ plan mode on</code>)</td></tr>
+<tr><td><span class="step-num">2</span></td><td>Run the audit: <code>/pydantic-audit</code></td></tr>
+<tr><td><span class="step-num">3</span></td><td>Review the table Claude produces. Ask follow-up questions or narrow scope in conversation — you're still in plan mode, so nothing gets edited</td></tr>
+<tr><td><span class="step-num">4</span></td><td>Ask Claude to turn the audit into a concrete plan: <em>"Based on this audit, draft a refactor plan: which files to migrate, in what order (lowest-risk first), and how to sequence commits."</em></td></tr>
+<tr><td><span class="step-num">5</span></td><td>When the plan is ready, press <code>Ctrl+G</code> to open it in your editor and hand-edit it directly if needed</td></tr>
+<tr><td><span class="step-num">6</span></td><td>Approve it. Claude Code offers a choice: <strong>"Yes, manually approve edits"</strong> (review every diff) or <strong>"Yes, auto-accept edits"</strong>/<strong>"Yes, and use auto mode"</strong> (fewer prompts). For a refactor touching many files with unfamiliar risk, start with manual approval</td></tr>
+</table>
+
+<div class="note">Approving a plan exits Plan Mode and switches you into the mode you selected (manual review or <code>acceptEdits</code>) — Claude then starts editing. You can always cycle back into Plan Mode with <code>Shift+Tab</code> or <code>/plan</code> if you want to re-plan a later phase (e.g. after the low-risk files are done, before tackling the risky ones). If a step goes sideways mid-session, <code>/rewind</code> (or double-<code>Esc</code>) opens the checkpoint menu to revert code, conversation, or both to an earlier prompt — faster than a git revert for in-session mistakes, though it doesn't replace git for anything you want to keep permanently.</div>
+
+<hr>
+
+<h2>6. Direct execution phase</h2>
+<p>Once the plan is approved, drive the actual migration file-by-file with the second skill rather than one giant instruction — this keeps each unit of work small, reviewable, and bounded by the hooks from Step 3.</p>
+
+<pre><code>/pydantic-refactor src/api/schemas/user_payload.py</code></pre>
+
+<p>For each file:</p>
+<ul>
+  <li>The <code>PreToolUse</code> hook silently blocks any accidental touch to a migration or lockfile</li>
+  <li>The <code>PostToolUse</code> hook auto-runs <code>ruff check --fix</code> after every edit — you'll see no output on success</li>
+  <li>Review the diff with <code>/diff</code> before moving to the next file (or after each batch, if you chose auto-accept)</li>
+  <li>The <code>Stop</code> hook re-runs the full test suite before Claude can finish its turn and will force a fix loop if something regresses</li>
+</ul>
+
+<p>Repeat for each file in the plan's sequence, lowest-risk first. If a file turns out to need more judgment than expected, drop back into Plan Mode (<code>/plan</code>) for that file specifically before resuming execution.</p>
+
+<hr>
+
+<h2 id="automate"><span class="phase-badge">Phase 3 — Automate</span><br>7. Run the audit unattended with headless mode</h2>
+<p>Once the audit skill is stable, you don't need an interactive session to run it — for example, as a periodic drift check that flags new dataclasses/TypedDicts sneaking back into the codebase. Claude Code's <code>-p</code> (<code>--print</code>) flag runs one prompt non-interactively and exits, which is the same mechanism behind CI jobs, cron jobs, and the GitHub Action.</p>
+
+<pre><code>claude -p "/pydantic-audit" \
+  --allowedTools "Bash(pip show pydantic),Bash(rg *),Bash(grep -rn *),Read,Grep,Glob" \
+  --max-turns 20 \
+  --output-format json &gt; pydantic-audit-report.json</code></pre>
+
+<table>
+<tr><th>Flag</th><th>Why it's here</th></tr>
+<tr><td><code>-p</code></td><td>Non-interactive: sends the prompt, prints the result, exits. There's no permission prompt loop in headless mode, so tools must be pre-authorized or the run stalls.</td></tr>
+<tr><td><code>--allowedTools</code></td><td>Scopes exactly what the audit is allowed to run — mirrors the skill's own <code>allowed-tools</code> frontmatter. Keep this narrow; headless runs have no human in the loop to catch an over-broad grant.</td></tr>
+<tr><td><code>--max-turns</code></td><td>Caps how many tool calls the run can make before giving up — a sane ceiling for an unattended job.</td></tr>
+<tr><td><code>--output-format json</code></td><td>Machine-readable result, so a script or CI step can parse it (e.g. fail a build if new v1-style patterns appear).</td></tr>
+</table>
+
+<div class="safety">Headless mode is exactly where the guardrails from Phase 2 matter most — nobody is watching the run to catch a mistake in the moment. Keep <code>--allowedTools</code> scoped to read-only commands for the audit; never run <code>/pydantic-refactor</code> unattended with broad tool access unless the <code>Stop</code> hook (Step 3c) and CI's own test gate are both in place to catch a bad result before it merges.</div>
+
+<p>To schedule this as a recurring check without your own cron infrastructure, Claude Code also supports <strong>routines</strong> — prompts scheduled to run on Anthropic's own infrastructure rather than a machine you maintain. Ask Claude to set one up in a session (<code>/schedule</code>), or configure it from the web UI, pointing it at the same <code>/pydantic-audit</code> skill.</p>
+
+<hr>
+
+<h2 id="verify"><span class="phase-badge">Phase 4 — Verify &amp; Share</span><br>8. Verify and close out</h2>
+<table>
+<tr><th>Check</th><th>Command / action</th></tr>
+<tr><td>Full test suite vs. baseline</td><td><code>pytest -q</code></td></tr>
+<tr><td>Type checking improved, not worsened</td><td><code>mypy src/</code></td></tr>
+<tr><td>Automated correctness/cleanup review of the diff</td><td><code>/code-review</code></td></tr>
+<tr><td>Security-sensitive review of the diff</td><td><code>/security-review</code></td></tr>
+<tr><td>Re-run the audit to confirm adoption improved</td><td><code>/pydantic-audit</code></td></tr>
+<tr><td>Update project memory with the new baseline</td><td>Ask Claude: <em>"Update CLAUDE.md — remove the 'target state' framing now that this is the actual state, and note any conventions we ended up deviating from."</em></td></tr>
+</table>
+
+<div class="tip">The less closely you watched a given stretch of work — an overnight run, a headless CI job, a long auto-accept batch — the more of this checklist you should actually run rather than skim. A five-minute manual pass isn't a substitute for the test suite and <code>/code-review</code> on work nobody reviewed as it happened.</div>
+
+<h3>8a. Gate it in CI with the GitHub Action</h3>
+<p>For a repo where this refactor recurs (new PRs re-introducing old patterns), wire the audit into pull request checks with Anthropic's official <code>anthropics/claude-code-action</code>, which wraps the same headless <code>-p</code> mechanism inside GitHub Actions. A minimal step:</p>
+<pre><code>- name: Pydantic adoption check
+  uses: anthropics/claude-code-action@v1
+  with:
+    prompt: "/pydantic-audit — fail if any new file introduces a dataclass or TypedDict for API-boundary data"
+    claude_args: "--allowedTools Read,Grep,Glob,Bash(pip show pydantic)"
+  env:
+    ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+</code></pre>
+<p>Combine this with Claude Code's managed <code>/code-review</code> check on the same PR for a second, independent pass over the diff.</p>
+
+<h3>8b. Package the setup as a plugin your team can install</h3>
+<p>Everything from Steps 1–4 — the rules, hooks, and two skills — is standalone <code>.claude/</code> configuration right now, useful only in this repo. Once it's proven out, converting it into a plugin lets any teammate add the same audit/refactor toolkit to <em>their</em> project with one command instead of copying files by hand.</p>
+<ol>
+  <li>Create a plugin directory with a manifest: <code>mkdir -p pydantic-toolkit/.claude-plugin</code> and a <code>plugin.json</code> naming it, e.g. <code>{"name": "pydantic-toolkit", "description": "Audit and refactor helpers for Pydantic v2 adoption"}</code></li>
+  <li>Move <code>skills/pydantic-audit/</code> and <code>skills/pydantic-refactor/</code> into <code>pydantic-toolkit/skills/</code></li>
+  <li>Move the hooks into <code>pydantic-toolkit/hooks/hooks.json</code>, copying the same <code>hooks</code> object from <code>.claude/settings.json</code> — the format is identical</li>
+  <li>Test locally without installing anywhere: <code>claude --plugin-dir ./pydantic-toolkit</code>, then <code>/reload-plugins</code> after any edit</li>
+  <li>Publish it as a marketplace (a GitHub repo with a <code>.claude-plugin/marketplace.json</code> at the root) so teammates can run <code>/plugin marketplace add your-org/pydantic-toolkit</code> then <code>/plugin install pydantic-toolkit@your-org</code></li>
+</ol>
+<div class="tip">Project-specific detail — the actual Pydantic conventions in <code>CLAUDE.md</code> and the <code>paths</code>-scoped rule — stays in each repo's own <code>.claude/</code>. The plugin carries the reusable mechanism (the two skills, the hooks); the target conventions are still something each team states for its own codebase.</div>
+
+<hr>
+
+<h2>Appendix: full file listing</h2>
+<div class="tree">your-project/
+├── CLAUDE.md
+├── .claude/
+│   ├── settings.json                          # hooks (commit this — shared with team)
+│   ├── hooks/
+│   │   ├── protect-migration-files.sh
+│   │   └── verify-tests-before-stop.sh
+│   ├── rules/
+│   │   └── pydantic.md                        # paths-scoped, loads on demand
+│   └── skills/
+│       ├── pydantic-audit/
+│       │   └── SKILL.md
+│       └── pydantic-refactor/
+│           └── SKILL.md
+│
+└── pydantic-toolkit/                           # optional — Step 8b, for sharing across repos
+    ├── .claude-plugin/
+    │   └── plugin.json
+    ├── skills/
+    │   ├── pydantic-audit/SKILL.md
+    │   └── pydantic-refactor/SKILL.md
+    └── hooks/
+        └── hooks.json
+</div>
+
+<h2>Appendix: session checklist</h2>
+<ul class="checklist">
+  <li><input type="checkbox"> Branch created, baseline tests green</li>
+  <li><input type="checkbox"> <code>CLAUDE.md</code> written with build/test commands and target Pydantic conventions</li>
+  <li><input type="checkbox"> <code>.claude/rules/pydantic.md</code> added, scoped to <code>*.py</code></li>
+  <li><input type="checkbox"> Protect-migrations hook registered and tested (try editing a migration file — it should be blocked)</li>
+  <li><input type="checkbox"> Auto-lint <code>PostToolUse</code> hook registered</li>
+  <li><input type="checkbox"> Verify-tests <code>Stop</code> hook registered and tested (break a test on purpose and confirm Claude gets blocked from stopping)</li>
+  <li><input type="checkbox"> <code>/pydantic-audit</code> and <code>/pydantic-refactor</code> skills created</li>
+  <li><input type="checkbox"> Ran <code>/pydantic-audit</code> in Plan Mode, reviewed findings</li>
+  <li><input type="checkbox"> Drafted and approved a sequenced refactor plan</li>
+  <li><input type="checkbox"> Executed file-by-file with <code>/pydantic-refactor &lt;path&gt;</code>, reviewing diffs</li>
+  <li><input type="checkbox"> Full suite, type check, and <code>/code-review</code> pass at the end</li>
+  <li><input type="checkbox"> <code>CLAUDE.md</code> updated to reflect the new baseline</li>
+  <li><input type="checkbox"> (Optional) Headless audit tested with <code>claude -p</code> and scoped <code>--allowedTools</code></li>
+  <li><input type="checkbox"> (Optional) CI check or routine wired up for recurring drift detection</li>
+  <li><input type="checkbox"> (Optional) Toolkit packaged as a plugin for other repos/teammates</li>
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<!-- saved from url=(0071)file:///C:/Users/rodrigobv/Downloads/CLAUDE_md_PEP_Recommendations.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLAUDE.md PEP Recommendations</title>
+    <style>
+        :root {
+            --bg-main: #f9fafb;
+            --bg-card: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --accent: #8b5cf6;
+            --accent-light: #ede9fe;
+            --border: #e5e7eb;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --code-keyword: #569cd6;
+            --code-string: #ce9178;
+            --code-comment: #6a9955;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 2.5rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.125rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            color: var(--text-main);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 1.5rem;
+            background-color: var(--accent);
+            border-radius: 2px;
+        }
+
+        ul {
+            list-style-type: none;
+        }
+
+        li {
+            margin-bottom: 1.25rem;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        li::before {
+            content: "•";
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 1.2rem;
+            position: absolute;
+            left: 0;
+            top: -2px;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        .pep-badge {
+            background-color: var(--accent-light);
+            color: var(--accent);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875em;
+            font-family: monospace;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .code-container {
+            background-color: var(--code-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 1.5rem;
+        }
+
+        .code-header {
+            background-color: #2d2d2d;
+            color: #858585;
+            padding: 0.75rem 1rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            border-bottom: 1px solid #404040;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        pre {
+            padding: 1.5rem;
+            overflow-x: auto;
+            color: var(--code-text);
+            font-family: 'Fira Code', Consolas, Monaco, monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .highlight-title {
+            color: var(--code-keyword);
+            font-weight: bold;
+        }
+        
+        .highlight-bullet {
+            color: var(--code-string);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CLAUDE.md Python PEP Rules</h1>
+            <p class="subtitle">Detailed recommendations for enforcing modern Python standards via AI agents.</p>
+        </header>
+
+        <div class="card">
+            <h2>Why Specificity Matters</h2>
+            <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                Telling an LLM to simply "follow PEPs" is too vague and can lead to obsolete or conflicting patterns. 
+                Referencing explicit PEP numbers grounds the AI's code generation in precise, modern standards without wasting context tokens.
+            </p>
+        </div>
+
+        <div class="card">
+            <h2>Key PEPs to Enforce</h2>
+            <ul>
+                <li>
+                    <span class="pep-badge">PEP 585 &amp; 604</span> <strong>Modern Type Annotations:</strong> 
+                    Require standard collections for type hints (<code>list[str]</code>, <code>dict[str, int]</code>) and the pipe syntax for unions (<code>str | None</code>). Ban legacy imports like <code>typing.List</code> and <code>typing.Optional</code>.
+                </li>
+                <li>
+                    <span class="pep-badge">PEP 695</span> <strong>Type Parameter Syntax:</strong> 
+                    Require native Python 3.12+ generics syntax (<code>def process[T](item: T) -&gt; T:</code>) and the <code>type</code> keyword for aliases, eliminating the need for <code>TypeVar</code>.
+                </li>
+                <li>
+                    <span class="pep-badge">PEP 8 &amp; 257</span> <strong>Formatting &amp; Docstrings:</strong> 
+                    Enforce structural consistency. Require <code>snake_case</code> for functions, <code>PascalCase</code> for classes, and mandate Google-style or Sphinx-style docstrings for all public interfaces.
+                </li>
+                <li>
+                    <span class="pep-badge">PEP 621</span> <strong>Project Metadata:</strong> 
+                    Ensure the AI understands that all project dependencies, build configurations, and tool settings (like Ruff or Pytest) must strictly reside in <code>pyproject.toml</code>.
+                </li>
+                <li>
+                    <span class="pep-badge">PEP 634 &amp; 701</span> <strong>Modern Idioms:</strong> 
+                    Encourage Structural Pattern Matching (<code>match / case</code>) over complex <code>if/else</code> chains, and utilize formalised inline f-strings for cleaner string interpolation.
+                </li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Copy-Paste Template for CLAUDE.md</h2>
+            <p style="color: var(--text-muted);">Append the following block to your project's <code>CLAUDE.md</code> file to enforce these standards across all AI interactions.</p>
+            
+            <div class="code-container">
+                <div class="code-header">
+                    <span>CLAUDE.md</span>
+                    <span>Markdown</span>
+                </div>
+                <pre><code><span class="highlight-title">## PEP &amp; Coding Standards</span>
+
+<span class="highlight-bullet">-</span> **PEP 8 (Formatting):** Strictly follow snake_case for functions/variables and PascalCase for classes. Max line length is 88 characters.
+<span class="highlight-bullet">-</span> **PEP 257 (Docstrings):** Required for all public functions, classes, and modules using Google-style conventions.
+<span class="highlight-bullet">-</span> **PEP 585 &amp; 604 (Modern Type Hints):** Use built-in generic types (`list[str]`, `dict[str, int]`) and pipe syntax for unions (`str | None`). Do NOT import `List`, `Dict`, `Union`, or `Optional` from `typing`.
+<span class="highlight-bullet">-</span> **PEP 695 (Type Parameters):** Use native Python 3.12 generic syntax (`def func[T]()`) and type aliases (`type Matrix = list[list[int]]`). Do not use `TypeVar`.
+<span class="highlight-bullet">-</span> **PEP 621 (Metadata):** All project dependencies, tools, and build configurations must be read from and written to `pyproject.toml`. Do not create `requirements.txt` or `setup.py`.
+<span class="highlight-bullet">-</span> **PEP 634 (Pattern Matching):** Use `match / case` syntax for complex conditional logic and type matching where appropriate.
+<span class="highlight-bullet">-</span> **PEP 701 (F-Strings):** Utilize modern f-string syntax, allowing inline quote reuse and multi-line expressions.</code></pre>
+            </div>
+        </div>
+    </div>
+
+</body></html>

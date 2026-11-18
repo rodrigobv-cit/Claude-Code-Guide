@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pydantic & Claude Tool Calling Reference</title>
+  <style>
+    :root {
+      --bg-main: #0d1117;
+      --bg-surface: #161b22;
+      --bg-code: #0b0e14;
+      --border-color: #30363d;
+      --text-main: #c9d1d9;
+      --text-heading: #f0f6fc;
+      --text-muted: #8b949e;
+      --accent-blue: #58a6ff;
+      --accent-green: #3fb950;
+      --accent-purple: #bc8cff;
+      --accent-orange: #f0883e;
+      --font-mono: "JetBrains Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 2.5rem 1rem;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    header h1 {
+      color: var(--text-heading);
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      margin-top: 0.5rem;
+    }
+
+    h2 {
+      color: var(--text-heading);
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin: 2rem 0 1rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    p, ul {
+      margin-bottom: 1rem;
+    }
+
+    ul {
+      padding-left: 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.4rem;
+    }
+
+    strong {
+      color: var(--text-heading);
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.88em;
+      background-color: rgba(110, 118, 129, 0.2);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      color: var(--accent-orange);
+    }
+
+    pre {
+      background-color: var(--bg-code);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 1.2rem;
+      overflow-x: auto;
+      margin: 1.2rem 0;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      font-size: 0.88rem;
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+
+    /* Code highlights */
+    .keyword { color: var(--accent-purple); }
+    .type { color: var(--accent-blue); }
+    .string { color: #a5d6ff; }
+    .comment { color: var(--text-muted); font-style: italic; }
+
+    /* Comparison Table */
+    .table-container {
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    thead {
+      background-color: var(--bg-surface);
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      color: var(--text-heading);
+      font-weight: 600;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .status-yes {
+      color: var(--accent-green);
+      font-weight: 600;
+    }
+
+    .status-no {
+      color: var(--accent-orange);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Pydantic & Claude Tool Calling</h1>
+      <p>Runtime Data Validation & Deterministic Structured Output Specification</p>
+    </header>
+
+    <section>
+      <h2>How Pydantic Works</h2>
+      <p>Pydantic transforms standard Python type hints into active, compiled runtime validation constraints:</p>
+      <ul>
+        <li><strong>Compiled Core Engine:</strong> Built on <code>pydantic-core</code> (Rust) for zero-overhead validation loops.</li>
+        <li><strong>Strict vs. Coercive Parsing:</strong> Seamlessly parses string representations into native types (e.g., <code>"42"</code> &rarr; <code>42</code>).</li>
+        <li><strong>Native OpenAPI / JSON Schema:</strong> Exposes the complete model definition via <code>.model_json_schema()</code>.</li>
+        <li><strong>Deterministic Serialization:</strong> Clean exports to standard Python dicts (<code>.model_dump()</code>) and JSON (<code>.model_dump_json()</code>).</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Enforcing Structured JSON with Claude</h2>
+      <p>To guarantee valid JSON from Claude without syntax deviations, pass Pydantic's JSON schema as an Anthropic tool and mandate its execution using <code>tool_choice</code>:</p>
+
+      <pre><code><span class="keyword">from</span> typing <span class="keyword">import</span> Literal
+<span class="keyword">from</span> anthropic <span class="keyword">import</span> Anthropic
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field
+
+<span class="comment"># 1. Define the target schema</span>
+<span class="keyword">class</span> <span class="type">SecurityAlert</span>(BaseModel):
+    incident_id: <span class="type">str</span> = Field(description=<span class="string">"Format: SEC-XXXX"</span>)
+    severity: Literal[<span class="string">"low"</span>, <span class="string">"medium"</span>, <span class="string">"high"</span>, <span class="string">"critical"</span>]
+    affected_services: <span class="type">list</span>[<span class="type">str</span>] = Field(min_length=1)
+    recommended_action: <span class="type">str</span>
+
+<span class="comment"># 2. Build the Anthropic Tool definition directly from Pydantic</span>
+alert_tool = {
+    <span class="string">"name"</span>: <span class="string">"record_security_alert"</span>,
+    <span class="string">"description"</span>: <span class="string">"Extract structured incident parameters from logs."</span>,
+    <span class="string">"input_schema"</span>: SecurityAlert.model_json_schema()
+}
+
+client = Anthropic()
+
+<span class="comment"># 3. Force Claude to execute the tool</span>
+response = client.messages.create(
+    model=<span class="string">"claude-3-7-sonnet-20250219"</span>,
+    max_tokens=1024,
+    tools=[alert_tool],
+    tool_choice={<span class="string">"type"</span>: <span class="string">"tool"</span>, <span class="string">"name"</span>: <span class="string">"record_security_alert"</span>},
+    messages=[{
+        <span class="string">"role"</span>: <span class="string">"user"</span>,
+        <span class="string">"content"</span>: <span class="string">"ALERT: DB prod-pg-01 failed health check at 03:00 UTC. High memory pressure."</span>
+    }]
+)
+
+<span class="comment"># 4. Ingest and re-validate raw tool arguments</span>
+<span class="keyword">for</span> block <span class="keyword">in</span> response.content:
+    <span class="keyword">if</span> block.type == <span class="string">"tool_use"</span> <span class="keyword">and</span> block.name == <span class="string">"record_security_alert"</span>:
+        alert = SecurityAlert.model_validate(block.input)
+        print(f<span class="string">"Validated [{alert.severity}]: {alert.incident_id}"</span>)</code></pre>
+    </section>
+
+    <section>
+      <h2>Validation Guarantees vs. Required Guardrails</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>Guaranteed by Pydantic + Tool Choice</th>
+              <th>Required Developer Guardrail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>JSON Syntax</strong></td>
+              <td><span class="status-yes">&check; Yes</span> (No trailing commas, valid strings)</td>
+              <td>None</td>
+            </tr>
+            <tr>
+              <td><strong>Type Integrity</strong></td>
+              <td><span class="status-yes">&check; Yes</span> (Strict type validation/coercion)</td>
+              <td>None</td>
+            </tr>
+            <tr>
+              <td><strong>Key Completeness</strong></td>
+              <td><span class="status-yes">&check; Yes</span> (Missing keys trigger validation errors)</td>
+              <td>Set <code>Optional[...] = None</code> if input might be absent</td>
+            </tr>
+            <tr>
+              <td><strong>Field Documentation</strong></td>
+              <td><span class="status-yes">&check; Yes</span> (Exported via <code>model_json_schema()</code>)</td>
+              <td>Write descriptive <code>Field(description="...")</code> definitions</td>
+            </tr>
+            <tr>
+              <td><strong>Semantic Factuality</strong></td>
+              <td><span class="status-no">&cross; No</span> (LLMs can hallucinate valid types)</td>
+              <td>Source-grounded prompts, context retrieval, system evals</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+</body>
+</html>

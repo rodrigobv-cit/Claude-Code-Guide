@@ -1,0 +1,19 @@
+Conventions that apply all the time, things like naming rules or where files go, belong in your CLAUDE.md file. Procedures and reference material tied to a particular kind of task belong in a skill.
+
+There's a third case. A rule that Claude must not be able to skip belongs in a hook, not in either of the above. That's because CLAUDE.md and skills are both instructions that Claude follows, while a hook is code that actually runs. If skipping the rule isn't acceptable, don't leave it up to instruction-following.
+
+Here's the three-way rule for where guidance belongs, summarized:
+
+| Type of guidance | Where it goes | Why |
+|---|---|---|
+| **Standing conventions** — naming rules, file locations, general "how we do things here" | `CLAUDE.md` | Applies all the time, isn't tied to a specific task |
+| **Task-specific procedures & reference material** | A **skill** | Only relevant when doing that particular kind of work |
+| **Rules that must never be skippable** | A **hook** | Not an instruction Claude follows — it's code that actually executes |
+
+**The core distinction:** `CLAUDE.md` and skills are both just *instructions* — Claude reads them and (usually) follows them, but it's still "asking Claude nicely." A hook is different in kind: it's actual code that runs at a defined point (e.g. before a tool call), so it can enforce a rule mechanically rather than relying on Claude choosing to comply.
+
+**The test to apply:** ask *"is it acceptable for this rule to be skipped, misread, or forgotten?"*
+- If yes → `CLAUDE.md` or a skill is fine.
+- If no → it belongs in a hook, because only a hook can guarantee the rule always holds, regardless of what Claude decides to do.
+
+Example: "use camelCase for variables" → `CLAUDE.md` (a convention, low stakes if occasionally missed). "Never commit files matching `.env*`" → a `PreToolUse` hook that blocks the `Write`/`Edit` call outright, because you don't want that enforcement resting on Claude remembering an instruction.

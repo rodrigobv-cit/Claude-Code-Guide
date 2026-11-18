@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<!-- saved from url=(0067)file:///C:/Users/rodrigobv/Downloads/gemini-code-1788872519946.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Best Practices Enforced via Claude Code</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --heading-color: #2c3e50;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --accent-color: #d35400;
+            --border-color: #e2e8f0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        h1, h2, h3 {
+            color: var(--heading-color);
+            margin-top: 2rem;
+        }
+        h1 {
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 0.5rem;
+        }
+        h2 {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.3rem;
+            color: var(--accent-color);
+        }
+        .summary-box {
+            background-color: #e9ecef;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--accent-color);
+        }
+        .concept-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        ul {
+            padding-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: "Fira Code", Consolas, Monaco, "Courier New", Courier, monospace;
+            font-size: 0.9rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        code {
+            font-family: "Fira Code", Consolas, Monaco, "Courier New", Courier, monospace;
+            background-color: #e2e8f0;
+            color: #d35400;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            border-radius: 0;
+        }
+        .filename {
+            display: inline-block;
+            background-color: var(--heading-color);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px 4px 0 0;
+            font-family: monospace;
+            font-size: 0.85rem;
+            margin-bottom: -1rem;
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Structuring Python Best Practices via Claude Code</h1>
+    
+    <div class="summary-box">
+        <p><strong>Overview:</strong> To get the most reliable, production-ready Python code from Claude Code (or similar AI coding agents), you must structure its context logically. This relies on four pillars: <strong>Global Context (CLAUDE.md)</strong>, <strong>System Guardrails (Hooks)</strong>, <strong>Path-Scoped Guidelines (Rules)</strong>, and <strong>On-Demand Workflows (Skills)</strong>.</p>
+    </div>
+
+    <!-- 1. CLAUDE.md -->
+    <section class="concept-card">
+        <h2>1. CLAUDE.md (Always-On Baseline Guidance)</h2>
+        <p>The <code>CLAUDE.md</code> file sits at the root of your repository. It provides the foundational, non-negotiable context Claude needs to understand your project's ecosystem before writing a single line of code.</p>
+        
+        <h3>Main Best Practices to Enforce:</h3>
+        <ul>
+            <li><strong>Toolchain Execution:</strong> Explicitly state CLI commands (e.g., <code>uv add</code>, <code>pytest</code>, <code>ruff check</code>) so Claude doesn't hallucinate package manager commands.</li>
+            <li><strong>Core Language Standards:</strong> Mandate Python version (e.g., 3.12+), strict type hints (<code>mypy</code> strict mode), and docstring formats (Google/Sphinx).</li>
+            <li><strong>Architecture &amp; Layout:</strong> Explain the project structure (e.g., <code>src/</code> layout, domain-driven design) so Claude places generated files in the correct directories.</li>
+        </ul>
+
+        <h3>Complete Example:</h3>
+        <div class="filename">CLAUDE.md</div>
+        <pre><code class="language-markdown"># Python Project Guidelines
+
+## Core Standards
+- **Python Version:** 3.12+
+- **Typing:** Strict typing is mandatory. All functions must have type hints for parameters and return types. Use `typing` module (or standard collections for Python 3.9+).
+- **Docstrings:** Use Google-style docstrings for all public classes, methods, and modules.
+
+## Toolchain &amp; Commands
+- **Package Manager:** We use `uv`. To install dependencies, run `uv pip install &lt;package&gt;`. Do NOT use `pip install` or `poetry`.
+- **Formatting &amp; Linting:** We use Ruff. 
+  - Format: `uv run ruff format .`
+  - Lint: `uv run ruff check . --fix`
+- **Testing:** We use Pytest. Run tests via `uv run pytest tests/`.
+
+## Architecture
+- `src/api/`: FastAPI routers and endpoints only. No business logic.
+- `src/services/`: Core business logic and use cases.
+- `src/schemas/`: Pydantic v2 models for validation.
+- `src/db/`: SQLAlchemy models and repository pattern classes.
+
+Always prefer dependency injection over global state.</code></pre>
+    </section>
+
+    <!-- 2. Hooks -->
+    <section class="concept-card">
+        <h2>2. Hooks (Deterministic System Guardrails)</h2>
+        <p>Hooks intercept AI agent actions at specific lifecycle events (e.g., before executing a command, after modifying a file, before concluding a task). They ensure formatting, linting, and testing are handled deterministically by the machine, not rely on the LLM's memory.</p>
+
+        <h3>Main Best Practices to Enforce:</h3>
+        <ul>
+            <li><strong>Post-Edit Formatting:</strong> Automatically run <code>ruff format</code> and <code>ruff check --fix</code> after the agent writes to a file.</li>
+            <li><strong>Verification Gates (Stop Hook):</strong> Intercept task completion to run <code>pytest</code>. If tests fail, feed the error back to the agent instead of allowing it to stop.</li>
+            <li><strong>Security Guardrails (Pre-Tool Use):</strong> Block the AI from accidentally modifying <code>.env</code> files, `.venv` folders, or historical database migrations.</li>
+        </ul>
+
+        <h3>Complete Example:</h3>
+        <p><em>Note: This is represented as a shell script hook that a Claude agent wrapper might run after applying file changes (e.g., a post-edit script).</em></p>
+        <div class="filename">.claude/hooks/post_edit.sh</div>
+        <pre><code class="language-bash">#!/bin/bash
+# Hook triggered automatically after Claude writes/edits a Python file.
+
+MODIFIED_FILE=$1
+
+echo "Applying deterministic formatting and linting to $MODIFIED_FILE..."
+
+# 1. Run Ruff Formatter
+uv run ruff format "$MODIFIED_FILE"
+
+# 2. Run Ruff Linter with auto-fix (imports, unused variables)
+uv run ruff check --fix "$MODIFIED_FILE"
+
+# 3. Run Type Checking
+uv run mypy "$MODIFIED_FILE"
+MYPY_EXIT_CODE=$?
+
+if [ $MYPY_EXIT_CODE -ne 0 ]; then
+    echo "HOOK BLOCKED: Mypy type checking failed."
+    echo "Please ask Claude to fix the typing errors above before proceeding."
+    exit 1
+fi
+
+echo "Hook completed successfully."
+exit 0</code></pre>
+    </section>
+
+    <!-- 3. Rules -->
+    <section class="concept-card">
+        <h2>3. Rules (`.claude/rules/*.md`)</h2>
+        <p>Rules provide <strong>path-scoped context</strong>. Instead of cluttering the global <code>CLAUDE.md</code> with database-specific syntax, you define rules that only activate when Claude is working within a specific directory.</p>
+
+        <h3>Main Best Practices to Enforce:</h3>
+        <ul>
+            <li><strong>Data Validation (`src/schemas/`):</strong> Enforce Pydantic v2 standards, <code>model_validator</code> usage, and strict type coercion.</li>
+            <li><strong>Async Execution (`src/services/`):</strong> Force the use of <code>httpx</code> for async requests, <code>asyncio.TaskGroup</code>, and ban blocking I/O calls.</li>
+            <li><strong>Database Access (`src/db/`):</strong> Mandate SQLAlchemy 2.0 type-annotated declarative base mappings (<code>Mapped[int]</code>), and require explicit transactions.</li>
+        </ul>
+
+        <h3>Complete Example:</h3>
+        <div class="filename">.claude/rules/database.md</div>
+        <pre><code class="language-markdown">---
+description: "SQLAlchemy Database Models and Queries"
+globs: ["src/db/**/*.py", "src/repositories/**/*.py"]
+---
+
+# Database Coding Rules
+
+When working in `src/db/` or modifying database repositories, adhere strictly to **SQLAlchemy 2.0** standards.
+
+## 1. Model Definitions
+- Use strictly typed `Mapped[T]` and `mapped_column()` for all fields.
+- Do NOT use the legacy `Column()` syntax.
+- Use `String(255)` for bounded strings instead of generic `String`.
+
+## 2. Queries and Execution
+- Use `select()`, `insert()`, `update()`, and `delete()` constructs. Do not use legacy `Query` objects (`session.query()`).
+- All database operations must use `AsyncSession`.
+- Result fetching must use `await session.execute(stmt)`. Followed by `.scalars().all()` or `.scalar_one_or_none()`.
+
+## Example
+```python
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column
+from src.db.base import Base
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    is_active: Mapped[bool] = mapped_column(default=True)</code></pre></section></body></html>

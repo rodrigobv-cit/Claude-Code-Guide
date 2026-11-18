@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Refactoring Session Guide</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    max-width: 860px;
+    margin: 40px auto;
+    padding: 0 24px;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background: #fdfdfd;
+  }
+  h1 {
+    font-size: 1.9em;
+    border-bottom: 3px solid #2b6cb0;
+    padding-bottom: 10px;
+  }
+  h2 {
+    font-size: 1.3em;
+    color: #2b6cb0;
+    margin-top: 2em;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 6px;
+  }
+  h3 {
+    font-size: 1.05em;
+    color: #333;
+  }
+  code {
+    background: #f0f0f0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.9em;
+  }
+  pre {
+    background: #1e1e2e;
+    color: #e6e6e6;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #2b6cb0;
+    color: white;
+  }
+  tr:nth-child(even) {
+    background: #f6f8fa;
+  }
+  ul.checklist {
+    list-style: none;
+    padding-left: 0;
+  }
+  ul.checklist li {
+    margin: 6px 0;
+  }
+  ul.checklist input {
+    margin-right: 8px;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 2em 0;
+  }
+  .intro {
+    font-style: italic;
+    color: #555;
+  }
+</style>
+</head>
+<body>
+
+<h1>Refactoring Session Guide (Template)</h1>
+<p class="intro">A structured walkthrough for running a focused refactoring session on a Python codebase. "Check Pydantic adoption" is one diagnostic step within a broader flow — use the whole template or just the sections you need.</p>
+
+<hr>
+
+<h2>1. Define Scope &amp; Goals</h2>
+<p>Before touching code, pin down:</p>
+<ul>
+  <li><strong>Target area</strong>: one module, one service, or the whole repo?</li>
+  <li><strong>Motivation</strong>: performance, readability, type-safety, consistency, preparing for a feature, or paying down tech debt?</li>
+  <li><strong>Definition of done</strong>: what does "refactored" mean for this session? (e.g., "all API request/response models use Pydantic", "no bare dicts crossing service boundaries")</li>
+  <li><strong>Non-goals</strong>: what you will explicitly <em>not</em> change today (avoids scope creep).</li>
+</ul>
+
+<h2>2. Baseline Audit</h2>
+<p>Get a snapshot of the current state before making changes.</p>
+<ul>
+  <li>Run existing tests and record pass/fail state (refactors should be behavior-preserving; you need a "before" picture).</li>
+  <li>Check test coverage for the target area — low coverage means higher refactor risk.</li>
+  <li>Note current linting/type-checking status (mypy/pyright errors, if any).</li>
+  <li>Identify dependency versions in use (this is where the Pydantic check fits in — see Section 3).</li>
+</ul>
+
+<h2>3. Check Pydantic Adoption</h2>
+<p>Goal: understand <em>how</em> and <em>how consistently</em> Pydantic is used before deciding whether/how to extend or standardize it.</p>
+
+<h3>What to look for</h3>
+<table>
+  <tr><th>Check</th><th>Why it matters</th></tr>
+  <tr>
+    <td>Version in use (<code>pydantic</code> in requirements/lockfile)</td>
+    <td>v1 vs v2 have different APIs (<code>.dict()</code> vs <code>.model_dump()</code>, <code>validator</code> vs <code>field_validator</code>, <code>Config</code> class vs <code>model_config</code>). Mixing versions across services causes subtle bugs.</td>
+  </tr>
+  <tr>
+    <td>Where models are defined</td>
+    <td>Are Pydantic models used at API boundaries only (request/response), or also internally for domain logic? Inconsistent boundaries often signal a half-finished migration.</td>
+  </tr>
+  <tr>
+    <td>Competing patterns</td>
+    <td>Look for <code>dataclasses</code>, <code>TypedDict</code>, <code>attrs</code>, or raw <code>dict</code>/<code>NamedTuple</code> doing the same job Pydantic models do elsewhere. These are refactor candidates if the goal is consistency.</td>
+  </tr>
+  <tr>
+    <td>Validation duplication</td>
+    <td>Manual <code>if</code> checks or custom validators that Pydantic's built-in validation (<code>Field</code>, <code>field_validator</code>, <code>model_validator</code>) could replace.</td>
+  </tr>
+  <tr>
+    <td>Serialization patterns</td>
+    <td>Manual <code>json.dumps</code>/<code>asdict</code> calls next to Pydantic's <code>.model_dump_json()</code> — a sign of inconsistent adoption.</td>
+  </tr>
+  <tr>
+    <td>Settings management</td>
+    <td>Is <code>pydantic-settings</code> (or v1's <code>BaseSettings</code>) used for config, or is config handled ad hoc via <code>os.environ</code> / <code>dotenv</code>?</td>
+  </tr>
+  <tr>
+    <td>ORM/DB layer overlap</td>
+    <td>If using SQLAlchemy or similar, check whether Pydantic models duplicate ORM models unnecessarily, or whether <code>from_attributes</code>/<code>orm_mode</code> is used to bridge them cleanly.</td>
+  </tr>
+</table>
+
+<h3>Quick commands to run during the session</h3>
+<p>(adjust for your tooling)</p>
+<pre><code># Find Pydantic version
+pip show pydantic
+
+# Find all Pydantic model definitions
+grep -rn "BaseModel" --include="*.py" .
+
+# Find v1-style patterns that may need migration to v2
+grep -rn "\.dict()\|\.json()\|@validator\|class Config" --include="*.py" .
+
+# Find competing data patterns worth comparing against Pydantic usage
+grep -rn "@dataclass\|TypedDict" --include="*.py" .
+</code></pre>
+
+<p><strong>Output of this step:</strong> a short list — e.g., "12 Pydantic models, all v2-style, but 4 modules still use raw dataclasses for API payloads; settings are handled via os.environ, not pydantic-settings." This becomes input to Section 4.</p>
+
+<h2>4. Plan the Refactor</h2>
+<p>Based on the audit:</p>
+<ul>
+  <li>Decide the <strong>target pattern</strong> (e.g., "standardize on Pydantic v2 for all data crossing module boundaries").</li>
+  <li>Sequence changes from <strong>lowest-risk to highest-risk</strong> (pure internal modules before public API contracts).</li>
+  <li>Identify <strong>breaking changes</strong> (e.g., serialization output format changing) and who/what downstream depends on them.</li>
+  <li>Decide whether this is a <strong>big-bang</strong> change or an <strong>incremental/strangler</strong> migration (usually incremental is safer for shared codebases).</li>
+</ul>
+
+<h2>5. Execute in Small, Verifiable Steps</h2>
+<ul>
+  <li>One logical change per commit (e.g., "migrate <code>UserPayload</code> from dataclass to Pydantic model").</li>
+  <li>Run tests after each step, not just at the end.</li>
+  <li>If migrating Pydantic v1 → v2 syntax, do it as its own isolated pass, separate from behavioral changes.</li>
+  <li>Keep an eye out for silent behavior changes (e.g., Pydantic's default validation/coercion rules differ from manual checks — ints coercing from strings, extra fields being silently dropped vs. rejected).</li>
+</ul>
+
+<h2>6. Review &amp; Validate</h2>
+<ul>
+  <li>Re-run the full test suite and compare against the Section 2 baseline.</li>
+  <li>Re-run type checking (mypy/pyright) — Pydantic models should improve, not worsen, type coverage.</li>
+  <li>Spot-check serialization output (API responses, logs) for format drift.</li>
+  <li>Peer review focused specifically on: consistency with the target pattern, and any validation behavior changes.</li>
+</ul>
+
+<h2>7. Document &amp; Close Out</h2>
+<ul>
+  <li>Update any internal docs/README noting "we standardize on Pydantic vX for Y."</li>
+  <li>Note any deliberately deferred items (e.g., "settings module still uses os.environ — tracked as follow-up").</li>
+  <li>Record the session's before/after (test pass rate, lint errors, files touched) for future reference.</li>
+</ul>
+
+<h2>Optional: Session Checklist (condensed)</h2>
+<ul class="checklist">
+  <li><input type="checkbox"> Scope and done-criteria defined</li>
+  <li><input type="checkbox"> Baseline tests/lint/type-check recorded</li>
+  <li><input type="checkbox"> Pydantic version + adoption pattern audited</li>
+  <li><input type="checkbox"> Competing data patterns identified</li>
+  <li><input type="checkbox"> Target pattern decided</li>
+  <li><input type="checkbox"> Changes sequenced low → high risk</li>
+  <li><input type="checkbox"> Incremental commits, tests run per step</li>
+  <li><input type="checkbox"> Full validation pass at the end</li>
+  <li><input type="checkbox"> Docs updated, follow-ups tracked</li>
+</ul>
+
+</body>
+</html>
